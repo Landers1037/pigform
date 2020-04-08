@@ -2,7 +2,8 @@
 
 import { app, protocol, BrowserWindow,Menu,MenuItem,Tray ,Notification,dialog} from 'electron'
 let appname = app.getName()+".exe";
-let appPath = app.getPath('exe').replace(appname,"")+"build/";
+//解决命令行空格问题
+let appPath = '"' + app.getPath('exe').replace(appname,"")+"pigapp\\";
 
 let cmd = require("node-cmd");
 let tray = null;
@@ -28,7 +29,7 @@ protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: { secure: true
 function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({
-    icon:"./build/left.png", width: 800, height: 600,
+    icon:"./pigapp/left.png", width: 800, height: 600,
     show: false,
     webPreferences: {
     nodeIntegration: true
@@ -60,7 +61,7 @@ function createWindow () {
 
 function createsetting(){
   w = new BrowserWindow({
-    icon:"./build/left.png",
+    icon:"./pigapp/left.png",
     width: 640,
     height: 600,
     show: false,
@@ -129,7 +130,7 @@ app.on('ready', async () => {
 
   }
   createWindow();
-  tray = new Tray("./build/left.png");
+  tray = new Tray("./pigapp/left.png");
   let trayContextMenu = Menu.buildFromTemplate([
     {
       label: "打开主程序",
@@ -147,7 +148,7 @@ app.on('ready', async () => {
     {
       label: "启动后台",
       click: () => {
-        cmd.run(appPath+"pigapp.exe");
+        cmd.run(appPath+"pigapp.exe" +'"');
       }
     },
     {
@@ -169,7 +170,7 @@ app.on('ready', async () => {
   tray.setToolTip("医疗管理系统");
   tray.setContextMenu(trayContextMenu);
   let log= null;
-  cmd.get(appPath+"pigapp.exe",function (err,data) {
+  cmd.get(appPath+"pigapp.exe"+'"',function (err,data) {
     log = err;
     if(n){
       let noti = new notify({

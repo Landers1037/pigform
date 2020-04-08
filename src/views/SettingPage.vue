@@ -80,7 +80,7 @@
             that.width = document.body.clientWidth;
             window.onresize = function () {
                 that.width = document.body.clientWidth;
-            }
+            };
             that.readconfig();
         },
         methods:{
@@ -90,8 +90,7 @@
             start(){
                 let that = this;
                 try{
-                    console.log(appPath);
-                    cmd.get(appPath+"build/"+"pigapp.exe",function (err,data,stderr) {
+                    cmd.get('"'+appPath+"pigapp\\"+"pigapp.exe"+'"',function (err,data,stderr) {
                         console.log(err);
                         console.log(data.toString());
                         if(err!=="" || err !== null){
@@ -218,8 +217,8 @@
                     let file = s.filePaths[0];
                     if(file.indexOf("app.asar")!==-1){
                         that.$message("即将更新程序，程序将退出");
-                        let update_cmd = "update.exe "+file;
-                        cmd.run(appPath+"build/"+update_cmd);
+                        let update_cmd = "update.exe\" "+file;
+                        cmd.run('"'+appPath+"pigapp\\"+update_cmd);
                         // cmd.get(appPath+"build/"+update_cmd,function (err,data) {
                         //     console.log(err);
                         // });
