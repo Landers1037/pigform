@@ -29,6 +29,7 @@ function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({
     icon:"./build/left.png", width: 800, height: 600,
+    show: false,
     webPreferences: {
     nodeIntegration: true
   },
@@ -49,7 +50,9 @@ function createWindow () {
     // Load the index.html when not in development
     win.loadURL('app://./index.html');
   }
-
+  win.once('ready-to-show',()=>{
+    win.show();
+  });
   win.on('closed', () => {
     win = null
   })
@@ -60,6 +63,7 @@ function createsetting(){
     icon:"./build/left.png",
     width: 640,
     height: 600,
+    show: false,
     webPreferences: {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,
@@ -70,6 +74,9 @@ function createsetting(){
   });
   const wurl = isDevelopment? 'http://localhost:8080/#/settingpage':"app://./index.html#/settingpage";
   w.loadURL(wurl);
+  w.once('ready-to-show',()=>{
+    w.show();
+  });
   w.on('close',()=>{
     w = null;
   })

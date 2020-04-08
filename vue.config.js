@@ -11,11 +11,13 @@ module.exports = {
         appId: "liaorenj@gmail.com",
         productName: "pigform",
         icon: "icon.ico",
+        compression: "maximum",
+
         nsis:{
           oneClick: false,
           allowToChangeInstallationDirectory: true,
           runAfterFinish: false,
-          shortcutName: "医疗管理系统"
+          shortcutName: "医疗管理系统",
         },
         extraFiles:[
           "./build/left.png",

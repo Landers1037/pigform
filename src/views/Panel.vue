@@ -26,6 +26,7 @@
                 style="width: 98%;margin: 20px auto 0;">
             <el-table-column
                     prop="id"
+                    :formatter="idplus"
                     align="center"
                     label="ID"
                     sortable
@@ -52,7 +53,14 @@
             </el-table-column>
             <el-table-column
                     prop="address"
-                    label="地址">
+                    label="地址"
+                    align="center"
+                    width="240">
+            </el-table-column>
+            <el-table-column
+                    prop="detail"
+                    align="left"
+                    label="病史体检，检验及诊断">
             </el-table-column>
             <el-table-column
                     align="center"
@@ -517,8 +525,11 @@
                 that.menu1.append(new menuitem({label:"复制",role:"copy"}));
                 that.menu1.append(new menuitem({label:"粘贴",role:"paste"}));
                 that.menu1.append(new menuitem({label:"全选",role:"selectAll"}));
-
             },
+            idplus(row,value,id){
+                // console.log(row,value,id);
+                return "0000"+id;
+            }
         }
     }
 </script>
