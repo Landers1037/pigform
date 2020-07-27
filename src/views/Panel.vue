@@ -16,9 +16,19 @@
                 <el-button slot="append" icon="el-icon-search" @click="Adsearch"></el-button>
             </el-input>
             </el-menu-item>
+            <el-menu-item>
+                <el-button icon="el-icon-s-data" @click="dbinfo">数据库信息</el-button>
+            </el-menu-item>
+            <el-menu-item>
+                <el-button icon="el-icon-refresh" @click="fresh">全部数据</el-button>
+            </el-menu-item>
+            <el-menu-item>
+                <el-button @click="back_up" type="primary">备份数据</el-button>
+            </el-menu-item>
         </el-menu>
+<!--        数据表格-->
         <el-table
-                :data="tableData"
+                :data="tableDataSlice"
                 max-height="600"
                 border
                 stripe
@@ -54,7 +64,7 @@
             <el-table-column
                     prop="address"
                     label="地址"
-                    align="center"
+                    align="left"
                     width="240">
             </el-table-column>
             <el-table-column
@@ -74,6 +84,17 @@
                 </template>
             </el-table-column>
         </el-table>
+<!--        底部分页栏-->
+        <el-pagination
+                style="margin-top: 15px"
+                background
+                layout="prev, pager, next,jumper"
+                :pager-count="9"
+                :page-size="page"
+                :total="count_size()"
+                @current-change="load_data"
+        >
+        </el-pagination>
         <el-dialog
                 title="详细信息"
                 :visible.sync="dialogVisible"
@@ -126,7 +147,7 @@
             <el-input
                     type="textarea"
                     placeholder="备注内容"
-                    v-model="itemdata.text"
+                    v-model="itemdata.addon"
                     maxlength="200"
                     show-word-limit
                     rows="3"
@@ -206,7 +227,7 @@
             <el-input
                     type="textarea"
                     placeholder="备注内容"
-                    v-model="itemdata.addon"
+                    v-model="adddata.addon"
                     maxlength="200"
                     show-word-limit
                     rows="3"
@@ -232,6 +253,11 @@
             <el-button type="primary" @click="checkAdd">确定添加</el-button>
             </span>
         </el-dialog>
+        <el-dialog title="数据库信息" :visible.sync="db_show">
+            <p style="font-size: 20px">数据库条目数量: {{db_info.count}}</p>
+            <p style="font-size: 20px">数据库占用空间: {{db_info.size}}KB</p>
+            <p style="font-size: 20px">数据库最新备份: {{db_info.new_bk}}</p>
+        </el-dialog>
     </div>
 </template>
 
@@ -241,7 +267,7 @@
     const menuitem = remote.MenuItem;
     const menu = remote.Menu; //全局的右键
     let appPath = app.getPath("exe").replace("pigform.exe","");
-    // let appPath = app.getPath("exe").replace("electron.exe","");
+    //let appPath = app.getPath("exe").replace("electron.exe","");
     export default {
         name: "Panel",
         data(){
@@ -269,10 +295,14 @@
                 ],
                 checked: false, //
                 tableData: [], //表格数据
+                tableDataSlice: [],//分页数据
+                page: 0,//分页大小
                 searchname:"", //搜索的关键词
                 repeat: false, //判断添加条目按钮抖动
                 copyrepeat: false, //判断复制条目按钮抖动,
-                menu1: null //右键
+                menu1: null, //右键
+                db_info: {},
+                db_show: false
             }
         },
         watch:{
@@ -302,6 +332,9 @@
             back(){
                 this.$router.push("/");
             },
+            count_size(){
+              return this.tableData?this.tableData.length:1;
+            },
             //配置文件
             readconfig(){
                 let fs = require("fs");
@@ -326,6 +359,7 @@
                                 that.worksuggestion = d.work;
                                 that.docsuggestion = d.doc;
                                 that.solutionsuggestion = d.solution;
+                                that.page = d.page;
                             }
                         });
                     }else{
@@ -334,7 +368,8 @@
                             "port": "5000",
                             "work": [{"value":"职工"}, {"value":"学生"}, {"value":"其他"}],
                             "doc": [{"value":"廖世利"}, {"value":"专家"}],
-                            "solution": []
+                            "solution": [],
+                            "page": 20
                         };
                         let str = JSON.stringify(conf,undefined,2);
                         fs.writeFile(appPath+"config.json",str, function (err){
@@ -352,6 +387,7 @@
                         try {
                             that.tableData = res.data;
                             this.$message("载入数据完成");
+                            this.load_data(1);
                         }catch (e) {
                             this.$message.error("数据转换错误");
                         }
@@ -495,6 +531,8 @@
                             this.$message("没有查询到相关数据");
                         } else{
                             that.tableData = res.data;
+                            //因为分片逻辑修改
+                            that.load_data(1);
                             this.$message("载入数据完成");
                         }
                     });
@@ -529,11 +567,49 @@
             idplus(row,value,id){
                 // console.log(row,value,id);
                 return "0000"+id;
+            },
+            dbinfo(){
+                //数据库信息获取
+                let that = this;
+                try {
+                    that.$axios.get('/api/info').then(res=>{
+                        that.db_info = res.data;
+                        that.db_show = true;
+                    });
+                }catch (e) {
+                    that.$message.error("API请求错误");
+                }
+            },
+            //分页
+            load_data(e){
+                let page_now = e;
+                let page = parseInt(this.page);
+                let data = this.tableData.slice((page_now-1)*page,page*page_now);
+                this.tableDataSlice = data;
+            },
+            back_up(){
+                let data = {"type": 0};
+                this.$axios.post("/api/backup",data).then(res=>{
+                    if(res.data==="bad"){
+                        this.$message.error("数据库备份失败");
+                    }else if(res.data === "ok"){
+                        let d = new Date();
+                        let day =  d.toLocaleDateString();
+                        this.$message({type: "success",message:day+"备份成功"});
+                    }
+                });
             }
         }
     }
 </script>
-
+<style>
+    html{
+        height: 100vh;
+    }
+    body{
+        height: 100vh;
+    }
+</style>
 <style scoped>
     .panel{
         padding-top: 8px;

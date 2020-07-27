@@ -4,8 +4,13 @@
     <i class="el-icon-s-tools" id="setting" @click="setting"></i>
     <div class="home-panel">
       <el-avatar :size="140" :src="img.uri"></el-avatar>
-      <el-input placeholder="请输入密码" v-model="pass" show-password id="input"></el-input>
-      <el-button type="primary" round id="login" @click="login" style="width: 160px;padding-top: 14px;padding-bottom: 14px;font-size: 16px;">进入系统</el-button>
+<!--      <el-input placeholder="请输入密码" v-model="pass" show-password id="input"></el-input>-->
+      <p style="color: #8f8f8f;font-size: 18px;font-weight: bold;padding: 20px 10px 0">
+        <span style="margin-right: 10px">Version3.1</span>
+        <span>Build20200726</span>
+      </p>
+      <el-button type="primary" round id="login" @click="login" style="width: 160px;padding-top: 14px;padding-bottom: 14px;font-size: 16px;font-weight: bold">进入系统</el-button>
+
     </div>
   </div>
 </template>
@@ -65,7 +70,8 @@ export default {
             "port": "5000",
             "work": [{"value":"职工"}, {"value":"学生"}, {"value":"其他"}],
             "doc": [{"value":"廖世利"}, {"value":"专家"}],
-            "solution": []
+            "solution": [],
+            "page": 20
           };
           let str = JSON.stringify(conf,undefined,2);
           fs.writeFile(appPath+"config.json",str, function (err){

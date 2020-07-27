@@ -30,6 +30,8 @@ function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({
     icon:"./pigapp/left.png", width: 800, height: 600,
+    minWidth: 800,
+    minHeight: 600,
     show: false,
     webPreferences: {
     nodeIntegration: true
@@ -65,6 +67,8 @@ function createsetting(){
     width: 640,
     height: 600,
     show: false,
+    minWidth: 640,
+    minHeight: 500,
     webPreferences: {
       nodeIntegration: true,
       nodeIntegrationInWorker: true,

@@ -27,6 +27,9 @@
                 <el-input placeholder="用，隔开" v-model="solution" clearable class="input">
                     <template slot="prepend">治疗方案可选项</template>
                 </el-input>
+                <el-input placeholder="数字" v-model="page" clearable class="input">
+                    <template slot="prepend">分页大小</template>
+                </el-input>
             </div>
             <el-button round @click="save" style="margin-top: 40px">保存配置</el-button>
             <el-button round @click="update" style="margin-top: 40px" type="primary">更新程序</el-button>
@@ -65,6 +68,7 @@
                 work: "职工,学生,其他",
                 doc: "廖世利,专家",
                 solution: "",
+                page: 0,
                 dialogVisible: false
             }
         },
@@ -156,10 +160,12 @@
                                 let work = that.get(d.work);
                                 let doc = that.get(d.doc);
                                 let solution = that.get(d.solution);
+                                let page = d.page;
                                 that.appname = d.appname;
                                 that.work = work;
                                 that.doc = doc;
                                 that.solution = solution;
+                                that.page = page;
                             }
                         });
                     }else{
@@ -189,6 +195,7 @@
                 let that = this;
                 let conf;
                 let appname = that.appname;
+                let page = that.page;
                 let work = that.work.replace("，",",").split(",");
                 let doc = that.doc.replace("，",",").split(",");
                 let solution = that.solution.replace("，",",").split(",");
@@ -201,7 +208,8 @@
                     "port": that.port,
                     "work": gwork,
                     "doc": gdoc,
-                    "solution": gsolution
+                    "solution": gsolution,
+                    "page": parseInt(page)
                 };
                 let str = JSON.stringify(conf,undefined,2);
                 fs.writeFile(appPath+"config.json",str, function (err){
