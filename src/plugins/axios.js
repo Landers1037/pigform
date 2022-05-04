@@ -10,7 +10,7 @@ import axios from "axios";
 
 let config = {
   // baseURL: process.env.baseURL || process.env.apiUrl || ""
-  baseURL: "http://127.0.0.1:5000/"
+  baseURL: "http://127.0.0.1:5000/",
   // timeout: 60 * 1000, // Timeout
   // withCredentials: true, // Check cross-site Access-Control
 };

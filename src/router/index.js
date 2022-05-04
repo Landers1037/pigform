@@ -1,5 +1,9 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import home from "@/views/Home";
+import panel from "@/views/Panel";
+import setting from "@/views/Setting";
+import settingPage from "@/views/SettingPage";
 
 Vue.use(VueRouter)
 
@@ -7,22 +11,22 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Home.vue')
+    component: home
   },
   {
     path: '/panel',
     name: 'panel',
-    component: () => import('../views/Panel.vue')
+    component: panel
   },
   {
     path: '/setting',
     name: 'setting',
-    component: () => import('../views/Setting.vue')
+    component: setting
   },
   {
     path: '/settingpage',
     name: 'settingpage',
-    component: () => import('../views/SettingPage.vue')
+    component: settingPage
   }
 ];
 

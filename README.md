@@ -1,4 +1,10 @@
-# pigform
+# pigform-featured
+
+完全的基于ES6语法重构的项目，不再使用冗余的语法
+模块化，标准化，轻量化
+后端完全使用node代替，抛弃之前的多进程服务
+不再使用pollyfill兼容
+lighter is better
 
 ## Project setup
 ```

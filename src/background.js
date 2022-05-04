@@ -1,21 +1,21 @@
 'use strict'
 
-import { app, protocol, BrowserWindow,Menu,MenuItem,Tray ,Notification,dialog} from 'electron'
-let appname = app.getName()+".exe";
-//解决命令行空格问题
-let appPath = '"' + app.getPath('exe').replace(appname,"")+"pigapp\\";
+import {app, protocol, BrowserWindow, Menu, MenuItem, Tray, Notification, dialog} from 'electron'
+const path = require('path');
+import axios from "axios";
+axios.defaults.baseURL = "http://127.0.0.1:5000/";
 
-let cmd = require("node-cmd");
 let tray = null;
-let notify = Notification;
-let n = notify.isSupported();
+const notify = Notification;
+const n = notify.isSupported();
 
 Menu.setApplicationMenu(null);
 import {
-  createProtocol,
-  /* installVueDevtools */
+    createProtocol,
+    /* installVueDevtools */
 } from 'vue-cli-plugin-electron-builder/lib'
-import da from "element-ui/src/locale/lang/da";
+import cmd from "node-cmd";
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -23,118 +23,143 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 let win;
 let w;
 
+let appPath1 = app.getPath("exe").replace("pigform.exe", "");
+let appPath = appPath1.replace("electron.exe","");
+
 // Scheme must be registered before the app is ready
-protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: { secure: true, standard: true } }])
+protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true, standard: true}}])
 
-function createWindow () {
-  // Create the browser window.
-  win = new BrowserWindow({
-    icon:"./pigapp/left.png", width: 800, height: 600,
-    minWidth: 800,
-    minHeight: 600,
-    show: false,
-    webPreferences: {
-    nodeIntegration: true
-  },
-    defaultFontFamily:{
-      standard: "微软雅黑",
-      sansSerif: "微软雅黑",
-      serif: "微软雅黑",
-      monospace: "Consolas",
+function createWindow() {
+    // Create the browser window.
+    win = new BrowserWindow({
+        icon: "./build/left.png", width: 960, height: 720,
+        minWidth: 800,
+        minHeight: 600,
+        show: false,
+        webPreferences: {
+            nodeIntegration: true
+        },
+        defaultFontFamily: {
+            standard: "微软雅黑",
+            sansSerif: "微软雅黑",
+            serif: "微软雅黑",
+            monospace: "Consolas",
+        }
+    });
+
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+        // Load the url of the dev server if in development mode
+        win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
+        if (!process.env.IS_TEST) win.webContents.openDevTools()
+    } else {
+        createProtocol('app')
+        // Load the index.html when not in development
+        win.loadURL('app://./index.html');
     }
-  });
-
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
-    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-    if (!process.env.IS_TEST) win.webContents.openDevTools()
-  } else {
-    createProtocol('app')
-    // Load the index.html when not in development
-    win.loadURL('app://./index.html');
-  }
-  win.once('ready-to-show',()=>{
-    win.show();
-  });
-  win.on('closed', () => {
-    win = null
-  })
+    win.once('ready-to-show', () => {
+        win.show();
+    });
+    win.on('closed', () => {
+        win = null
+    })
 }
 
-function createsetting(){
-  w = new BrowserWindow({
-    icon:"./pigapp/left.png",
-    width: 640,
-    height: 600,
-    show: false,
-    minWidth: 640,
-    minHeight: 500,
-    webPreferences: {
-      nodeIntegration: true,
-      nodeIntegrationInWorker: true,
-      webSecurity: false,
-      defaultFontSize: 15,
-      defaultFontFamily: "sansSerif"
-    },
-  });
-  const wurl = isDevelopment? 'http://localhost:8080/#/settingpage':"app://./index.html#/settingpage";
-  w.loadURL(wurl);
-  w.once('ready-to-show',()=>{
-    w.show();
-  });
-  w.on('close',()=>{
-    w = null;
-  })
+function createsetting() {
+    w = new BrowserWindow({
+        icon: "./build/left.png",
+        width: 800,
+        height: 600,
+        show: false,
+        minWidth: 640,
+        minHeight: 480,
+        webPreferences: {
+            nodeIntegration: true,
+            nodeIntegrationInWorker: true,
+            webSecurity: false,
+            defaultFontSize: 15,
+            defaultFontFamily: "sansSerif"
+        },
+    });
+    const wurl = isDevelopment ? 'http://localhost:8080/#/settingpage' : "app://./index.html#/settingpage";
+    w.loadURL(wurl);
+    w.once('ready-to-show', () => {
+        w.show();
+    });
+    w.on('close', () => {
+        w = null;
+    })
+}
+
+let ticker;
+let tickerErrorCount = 3;
+// 健康检查
+function healthCheck() {
+    if (!ticker) {
+        ticker = setInterval(() => {
+            if (tickerErrorCount > 0) {
+                axios.get("/api/health")
+                    .then()
+                    .catch(e => {
+                        tickerErrorCount = tickerErrorCount - 1;
+                        dialog.showMessageBoxSync({title: "健康检查", type: "error", message: "后台服务异常 请尝试重启"});
+                    })
+            }
+        }, 5000);
+    }
 }
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    if(n){
-      let noti = new notify({
-        title: "程序退出",
-        body: "退出"
-      });
-      noti.show();
+    // On macOS it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== 'darwin') {
+        if (n) {
+            const noti = new notify({
+                title: "程序退出",
+                body: "退出"
+            });
+            noti.show();
+        }
+        app.quit()
     }
-    app.quit()
-  }
 })
 
 app.on('before-quit', (event) => {
-  cmd.run("taskkill /f /t /im pigapp.exe");
-
+    clearInterval(ticker);
+    cmd.run("taskkill /f /t /im pigapp.exe");
 });
+
 app.on('activate', () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (win === null) {
-    createWindow()
-  }
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (win === null) {
+        createWindow();
+        healthCheck();
+    }
 })
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
-  if (isDevelopment && !process.env.IS_TEST) {
-    // Install Vue Devtools
-    // Devtools extensions are broken in Electron 6.0.0 and greater
-    // See https://github.com/nklayman/vue-cli-plugin-electron-builder/issues/378 for more info
-    // Electron will not launch with Devtools extensions installed on Windows 10 with dark mode
-    // If you are not using Windows 10 dark mode, you may uncomment these lines
-    // In addition, if the linked issue is closed, you can upgrade electron and uncomment these lines
-    // try {
-    //   await installVueDevtools()
-    // } catch (e) {
-    //   console.error('Vue Devtools failed to install:', e.toString())
-    // }
+    if (isDevelopment && !process.env.IS_TEST) {
+        // Install Vue Devtools
+        // Devtools extensions are broken in Electron 6.0.0 and greater
+        // See https://github.com/nklayman/vue-cli-plugin-electron-builder/issues/378 for more info
+        // Electron will not launch with Devtools extensions installed on Windows 10 with dark mode
+        // If you are not using Windows 10 dark mode, you may uncomment these lines
+        // In addition, if the linked issue is closed, you can upgrade electron and uncomment these lines
+        // try {
+        //   await installVueDevtools()
+        // } catch (e) {
+        //   console.error('Vue Devtools failed to install:', e.toString())
+        // }
 
   }
   createWindow();
-  tray = new Tray("./pigapp/left.png");
+  healthCheck();
+  cmd.run(path.join(appPath, "build", "pigapp.exe"));
+  tray = new Tray("./build/left.png");
   let trayContextMenu = Menu.buildFromTemplate([
     {
       label: "打开主程序",
@@ -152,13 +177,23 @@ app.on('ready', async () => {
     {
       label: "启动后台",
       click: () => {
-        cmd.run(appPath+"pigapp.exe" +'"');
+        cmd.get(path.join(appPath, "build", "pigapp.exe"), (err) => {
+            if (err) {
+                dialog.showMessageBoxSync({title: "后台服务", type: "error", message: "无法启动后台服务 请重试"});
+            } else {
+                dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已启动"});
+            }
+        });
       }
     },
     {
       label: "关闭后台",
       click: () => {
-        cmd.run("taskkill /f /t /im pigapp.exe");
+        cmd.get("taskkill /f /t /im pigapp.exe", err => {
+            if (!err) {
+                dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已关闭"});
+            }
+        });
       }
     },
     {
@@ -168,39 +203,31 @@ app.on('ready', async () => {
       }
     },
 
-  ]);
-  trayContextMenu.append(new MenuItem({type: "separator"}));
-  trayContextMenu.append(new MenuItem({label:"设置",click(){createsetting()}}));
-  tray.setToolTip("医疗管理系统");
-  tray.setContextMenu(trayContextMenu);
-  let log= null;
-  cmd.get(appPath+"pigapp.exe"+'"',function (err,data) {
-    log = err;
-    if(n){
-      let noti = new notify({
-        title: "程序启动失败",
-        body: "日志:" + log
-      });
-      noti.show();
-      console.log(dialog.showMessageBoxSync({title:"后台启动异常",type:"error", message:log.toString()}))
-    }
-  });
+    ]);
+    trayContextMenu.append(new MenuItem({type: "separator"}));
+    trayContextMenu.append(new MenuItem({
+        label: "设置", click() {
+            createsetting()
+        }
+    }));
+    tray.setToolTip("医疗管理系统");
+    tray.setContextMenu(trayContextMenu);
 });
 
-app.on('unresponsive',()=>{
-  console.log(dialog.showMessageBoxSync({title:"后台启动异常",type:"error", message:"当前页面未响应"}))
+app.on('unresponsive', () => {
+    dialog.showMessageBoxSync({title: "后台启动异常", type: "error", message: "当前页面未响应"});
 });
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
-  if (process.platform === 'win32') {
-    process.on('message', data => {
-      if (data === 'graceful-exit') {
-        app.quit()
-      }
-    })
-  } else {
-    process.on('SIGTERM', () => {
-      app.quit()
-    })
-  }
+    if (process.platform === 'win32') {
+        process.on('message', data => {
+            if (data === 'graceful-exit') {
+                app.quit()
+            }
+        })
+    } else {
+        process.on('SIGTERM', () => {
+            app.quit()
+        })
+    }
 }

@@ -2,6 +2,7 @@ module.exports = {
   // assetsDir: 'static',
   productionSourceMap: false,
   css: {
+    // css不再单独抽离，避免文件杂乱
     extract: false
   },
   pluginOptions: {
@@ -16,9 +17,13 @@ module.exports = {
         nsis:{
           oneClick: false,
           allowToChangeInstallationDirectory: true,
-          runAfterFinish: false,
+          runAfterFinish: true,
           shortcutName: "医疗管理系统",
         },
+        // 需要额外打包的二进制文件
+        // update更新器现在合并到服务主体中
+        // 一个签名校验器，用于在线激活
+        // help文档
         extraFiles:[
           "./build/left.png",
           "./build/pigapp.exe",
