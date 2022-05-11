@@ -69,10 +69,11 @@
 </template>
 
 <script>
-import {getAppPath, readConfigExtra, getConfigPath, getPigappPath, getDBPath} from "@/utils/config";
-import {dialog, shell} from 'electron';
-const path = require("path");
+import {getAppPath, getConfigPath, getDBPath, getPigappPath, readConfigExtra} from "@/utils/config";
+import {shell} from 'electron';
 import * as process from 'process';
+
+const path = require("path");
 
 const cmd = require("node-cmd");
 const fs = require("fs");

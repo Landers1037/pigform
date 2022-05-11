@@ -13,7 +13,6 @@ module.exports = {
         productName: "pigform",
         icon: "icon.ico",
         compression: "maximum",
-
         nsis:{
           oneClick: false,
           allowToChangeInstallationDirectory: true,

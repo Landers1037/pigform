@@ -1,8 +1,13 @@
 'use strict'
 
-import {app, protocol, BrowserWindow, Menu, MenuItem, Tray, Notification, dialog} from 'electron'
-const path = require('path');
+import {app, BrowserWindow, dialog, Menu, MenuItem, Notification, protocol, Tray} from 'electron'
 import axios from "axios";
+import {createProtocol,} from 'vue-cli-plugin-electron-builder/lib'
+import cmd from "node-cmd";
+import {getAppPath, getPigappPath} from "@/utils/config";
+
+const path = require('path');
+
 axios.defaults.baseURL = "http://127.0.0.1:5000/";
 
 let tray = null;
@@ -10,11 +15,6 @@ const notify = Notification;
 const n = notify.isSupported();
 
 Menu.setApplicationMenu(null);
-import {
-    createProtocol,
-    /* installVueDevtools */
-} from 'vue-cli-plugin-electron-builder/lib'
-import cmd from "node-cmd";
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -64,7 +64,7 @@ function createWindow() {
     })
 }
 
-function createsetting() {
+function createSetting() {
     w = new BrowserWindow({
         icon: "./build/left.png",
         width: 800,
@@ -91,7 +91,8 @@ function createsetting() {
 }
 
 let ticker;
-let tickerErrorCount = 3;
+let tickerErrorCount = 1;
+
 // 健康检查
 function healthCheck() {
     if (!ticker) {
@@ -99,7 +100,7 @@ function healthCheck() {
             if (tickerErrorCount > 0) {
                 axios.get("/api/health")
                     .then()
-                    .catch(e => {
+                    .catch(() => {
                         tickerErrorCount = tickerErrorCount - 1;
                         dialog.showMessageBoxSync({title: "健康检查", type: "error", message: "后台服务异常 请尝试重启"});
                     })
@@ -107,6 +108,8 @@ function healthCheck() {
         }, 5000);
     }
 }
+
+// 拼接启动命令行
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -137,7 +140,6 @@ app.on('activate', () => {
         healthCheck();
     }
 })
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -155,59 +157,63 @@ app.on('ready', async () => {
         //   console.error('Vue Devtools failed to install:', e.toString())
         // }
 
-  }
-  createWindow();
-  healthCheck();
-  cmd.run(path.join(appPath, "build", "pigapp.exe"));
-  tray = new Tray("./build/left.png");
-  let trayContextMenu = Menu.buildFromTemplate([
-    {
-      label: "打开主程序",
-      click: () => {
-        win.show()
-      }
-    },
-    {
-      label: "退出主程序",
-      click: () => {
-        app.quit();
-      }
-    },
-    { type: 'separator' },
-    {
-      label: "启动后台",
-      click: () => {
-        cmd.get(path.join(appPath, "build", "pigapp.exe"), (err) => {
-            if (err) {
-                dialog.showMessageBoxSync({title: "后台服务", type: "error", message: "无法启动后台服务 请重试"});
-            } else {
-                dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已启动"});
+    }
+    createWindow();
+    const dataDir = path.join(process.env.USERPROFILE, "pigform");
+    const pigappPath = path.join(appPath, "build", "pigapp.exe");
+    const pigappCMD = `${pigappPath} -data "${dataDir}"`;
+
+    cmd.run(pigappCMD);
+    healthCheck();
+    tray = new Tray("./build/left.png");
+    let trayContextMenu = Menu.buildFromTemplate([
+        {
+            label: "打开主程序",
+            click: () => {
+                win.show()
             }
-        });
-      }
-    },
-    {
-      label: "关闭后台",
-      click: () => {
-        cmd.get("taskkill /f /t /im pigapp.exe", err => {
-            if (!err) {
-                dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已关闭"});
+        },
+        {
+            label: "退出主程序",
+            click: () => {
+                app.quit();
             }
-        });
-      }
-    },
-    {
-      label: "调试模式",
-      click: () => {
-        win.webContents.openDevTools();
-      }
-    },
+        },
+        {type: 'separator'},
+        {
+            label: "启动后台",
+            click: () => {
+                cmd.get(genPigappCMD(), (err) => {
+                    if (err) {
+                        dialog.showMessageBoxSync({title: "后台服务", type: "error", message: "无法启动后台服务 请重试"});
+                    } else {
+                        dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已启动"});
+                    }
+                });
+            }
+        },
+        {
+            label: "关闭后台",
+            click: () => {
+                cmd.get("taskkill /f /t /im pigapp.exe", err => {
+                    if (!err) {
+                        dialog.showMessageBoxSync({title: "后台服务", type: "info", message: "后台服务已关闭"});
+                    }
+                });
+            }
+        },
+        {
+            label: "调试模式",
+            click: () => {
+                win.webContents.openDevTools();
+            }
+        },
 
     ]);
     trayContextMenu.append(new MenuItem({type: "separator"}));
     trayContextMenu.append(new MenuItem({
         label: "设置", click() {
-            createsetting()
+            createSetting()
         }
     }));
     tray.setToolTip("医疗管理系统");

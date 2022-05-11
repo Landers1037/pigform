@@ -173,11 +173,12 @@ func newServer(port string) {
 // 日志
 var logFile *os.File
 var homeDir, _ = os.UserHomeDir()
-var dbPath = path.Join(homeDir, "pig.db")
+var dataPath = path.Join(homeDir, "pigform")
+var dbPath = path.Join(homeDir, "pigform", "pig.db")
 
-func openLog() {
+func openLog(logPath string) {
 	var e error
-	logFile, e = os.Create(path.Join(homeDir, "pigform-go.log"))
+	logFile, e = os.Create(logPath)
 	if e != nil {
 		return
 	}
@@ -214,7 +215,7 @@ func (model) TableName() string {
 var DB *gorm.DB
 
 // 数据库操作层
-func openDB() (*gorm.DB, error) {
+func openDB(dbPath string) (*gorm.DB, error) {
 	log(fmt.Sprintf("数据库文件路径 %s", dbPath))
 	return gorm.Open("sqlite3", dbPath)
 }
@@ -228,11 +229,26 @@ func initTable() {
 
 func main() {
 	port := flag.String("port", "5000", "running port")
+	dataPathArgs := flag.String("data", dataPath, "pigform data path")
 	flag.Parse()
-	openLog()
+	var logPath string
+	if *dataPathArgs != "" {
+		logPath = path.Join(*dataPathArgs, "pigform-go.log")
+	} else {
+		logPath = path.Join(dataPath,"pigform-go.log")
+	}
+	openLog(logPath)
 
 	var err error
-	DB, err = openDB()
+	var dbPathArg string
+
+	if *dataPathArgs != "" {
+		dbPathArg = path.Join(*dataPathArgs, "pig.db")
+	} else {
+		dbPathArg = path.Join(dataPath, "pig.db")
+	}
+
+	DB, err = openDB(dbPathArg)
 	initTable()
 	if err != nil {
 		log("打开数据库文件失败", err.Error())

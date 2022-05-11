@@ -276,7 +276,7 @@ const app = require("electron").remote.app;
 const shell = require("electron").shell;
 const path = require("path");
 
-import { readConfigExtra, getDBPath, getAppPath } from '../utils/config';
+import {getAppPath, getDBPath, readConfigExtra} from '../utils/config';
 
 const menuitem = remote.MenuItem;
 const menu = remote.Menu; //全局的右键
@@ -497,7 +497,7 @@ export default {
           setTimeout(() => {
             that.fresh();
           }, 400);
-        } else  {
+        } else {
           that.$message.error("条目删除失败");
         }
       }).catch(() => {
@@ -659,6 +659,7 @@ body {
     width: 96%;
   }
 }
+
 .el-menu-item {
   padding: 0 .4rem;
 }

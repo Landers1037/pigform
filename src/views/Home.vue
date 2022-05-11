@@ -6,7 +6,7 @@
       <el-avatar :size="140" :src="img.uri"></el-avatar>
       <p style="color: #8f8f8f;font-size: 18px;font-weight: bold;padding: 20px 10px 0">
         <span style="margin-right: 10px">Version5.0</span>
-        <span>Build20220504</span>
+        <span>Build20220511</span>
       </p>
       <el-button id="login" round type="primary" @click="login">进入系统</el-button>
 
@@ -15,8 +15,13 @@
 </template>
 
 <script>
-import {getAppPath, genDefaultConfig, readConfigExtra} from "@/utils/config";
-import {SYSTEM_NAME} from '@/utils/config';
+import {
+  checkMigrateDone,
+  genDefaultConfig,
+  getAppPath, migrate,
+  readConfigExtra,
+  SYSTEM_NAME
+} from "@/utils/config";
 
 const appPath = getAppPath();
 export default {
@@ -28,7 +33,7 @@ export default {
     }
   },
   mounted() {
-    this.readconfig();
+    this.migrate();
   },
   methods: {
     login() {
@@ -37,10 +42,33 @@ export default {
     setting() {
       this.$router.push("/setting");
     },
-    async readconfig() {
+    async migrate() {
+      let that = this;
+      // 先迁移配置文件
+      if (!checkMigrateDone()) {
+        that.$notify({
+          title: '升级中',
+          message: '即将开始升级，请稍等',
+          duration: 2000
+        });
+        migrate();
+
+        if (checkMigrateDone()) {
+          setTimeout(() => {
+            that.$message("升级完毕， 数据迁移完成");
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            that.$message.error("升级失败， 数据迁移失败");
+          }, 1500);
+        }
+      }
+      this.readConfig();
+    },
+    readConfig() {
       let that = this;
       try {
-        const config = await readConfigExtra();
+        const config = readConfigExtra();
         if (config) {
           that.appname = config.appname;
         } else {
@@ -49,13 +77,13 @@ export default {
         }
       } catch (e) {
         if (e) {
+          console.log(e);
           that.$message.error("配置文件不存在，即将创建");
           genDefaultConfig();
         }
       }
     }
   }
-
 }
 </script>
 <style>

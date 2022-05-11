@@ -8,32 +8,32 @@ import settingPage from "@/views/SettingPage";
 Vue.use(VueRouter)
 
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: home
-  },
-  {
-    path: '/panel',
-    name: 'panel',
-    component: panel
-  },
-  {
-    path: '/setting',
-    name: 'setting',
-    component: setting
-  },
-  {
-    path: '/settingpage',
-    name: 'settingpage',
-    component: settingPage
-  }
+    {
+        path: '/',
+        name: 'Home',
+        component: home
+    },
+    {
+        path: '/panel',
+        name: 'panel',
+        component: panel
+    },
+    {
+        path: '/setting',
+        name: 'setting',
+        component: setting
+    },
+    {
+        path: '/settingpage',
+        name: 'settingpage',
+        component: settingPage
+    }
 ];
 
 const router = new VueRouter({
-  // mode: 'history',
-  base: process.env.BASE_URL,
-  routes
+    // mode: 'history',
+    base: process.env.BASE_URL,
+    routes
 })
 
 export default router
