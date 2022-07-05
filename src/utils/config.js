@@ -56,6 +56,10 @@ export function getConfigPathOld() {
     return path.join(getAppPath(), CONFIG);
 }
 
+export function getExportPath() {
+    return path.join(process.env.USERPROFILE, APPData);
+}
+
 export function getDBPath() {
     return path.join(process.env.USERPROFILE, APPData, DB);
 }

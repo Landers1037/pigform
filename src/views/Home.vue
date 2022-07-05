@@ -6,7 +6,7 @@
       <el-avatar :size="140" :src="img.uri"></el-avatar>
       <p style="color: #8f8f8f;font-size: 18px;font-weight: bold;padding: 20px 10px 0">
         <span style="margin-right: 10px">Version5.0</span>
-        <span>Build20220511</span>
+        <span>Build20220705</span>
       </p>
       <el-button id="login" round type="primary" @click="login">进入系统</el-button>
 

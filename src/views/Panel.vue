@@ -4,14 +4,14 @@
     </el-page-header>
     <el-menu class="el-menu-demo" default-active="1" mode="horizontal">
       <el-menu-item index="1">
-        <el-button @click="fresh" size="small">数据表格</el-button>
+        <i @click="fresh" class="el-icon-document"></i>
       </el-menu-item>
       <el-menu-item index="2">
-        <el-button @click="addItemDialog" size="small">添加条目</el-button>
+        <i @click="addItemDialog" class="el-icon-document-add"></i>
       </el-menu-item>
       <el-menu-item>
         <el-input v-model="searchname" placeholder="默认姓名查找" size="small">
-          <el-select slot="prepend" v-model="searchby" placeholder="按需查找" style="width: 120px">
+          <el-select slot="prepend" v-model="searchby" placeholder="按需查找" style="width: 100px">
             <el-option label="姓名" value="name"></el-option>
             <el-option label="日期" value="date"></el-option>
             <el-option label="电话" value="phone"></el-option>
@@ -28,6 +28,9 @@
       </el-menu-item>
       <el-menu-item>
         <el-button type="primary" @click="back_up" size="mini">备份数据</el-button>
+      </el-menu-item>
+      <el-menu-item>
+        <el-button type="primary" @click="export_excel" size="mini">导出Excel</el-button>
       </el-menu-item>
     </el-menu>
     <!--        数据表格-->
@@ -271,12 +274,15 @@
 </template>
 
 <script>
+import fs from "fs";
+
 const remote = require("electron").remote;
 const app = require("electron").remote.app;
 const shell = require("electron").shell;
 const path = require("path");
 
-import {getAppPath, getDBPath, readConfigExtra} from '../utils/config';
+import {getAppPath, getDBPath, getExportPath, readConfigExtra} from '../utils/config';
+import * as xlsx from "node-xlsx";
 
 const menuitem = remote.MenuItem;
 const menu = remote.Menu; //全局的右键
@@ -618,6 +624,72 @@ export default {
     back_up() {
       // 调用api打开本地目录
       shell.showItemInFolder(getDBPath())
+    },
+    // 导出excel 异步函数直到完成
+    export_excel() {
+      // 国际化替换
+      const headMap = {
+        id: "id",
+        date: "日期",
+        time: "时间",
+        name: "姓名",
+        sex: "性别",
+        age: "年龄",
+        illtime: "发病日期",
+        phone: "电话号码",
+        parent: "家属",
+        work: "工作",
+        address: "家庭地址",
+        detail: "具体信息",
+        solution: "治疗方案",
+        addon: "备注",
+        money: "收费",
+        doc: "医师"
+      }
+      const fileName = path.join(getExportPath(), "pigform_" +  new Date().getTime().toString() + ".xlsx");
+      this.$axios.get("/api/data").then(res => {
+        if (res.data.data !== "bad") {
+          try {
+            const data = res.data.data;
+            if (data.length <= 0) {
+              return;
+            }
+            const reformatData = function (d) {
+              let dataList = [];
+              dataList[0] = Object.keys(d[0]).map(x => {
+                return headMap[x];
+              });
+              d.forEach(x => {
+                let res = [];
+                Object.values(x).forEach(val => {
+                  res.push(val);
+                })
+                dataList.push(res);
+              });
+              return dataList;
+            }
+            const list = [
+              {
+                name: "sheet",
+                data: reformatData(data),
+              }
+            ]
+            const buffer = xlsx.build(list);
+            fs.writeFile(fileName, buffer, err => {
+              if (err){
+                console.log(err);
+                this.$message.error("表格导出失败" +  err.toString());
+              } else {
+                this.$message.success("表格导出至" +  fileName);
+              }
+            })
+          } catch (e) {
+            this.$message.error("数据转换错误" +  e.toString());
+          }
+        }
+      }).catch(() => {
+        this.$message.error("数据请求错误");
+      });
     }
   }
 }
